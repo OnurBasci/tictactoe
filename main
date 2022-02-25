@@ -1,0 +1,331 @@
+import copy
+
+"""
+ABOUT THIS PROGRAM
+This program is an implementation of the game tic tac toe with a user against computer.
+The computer will be playing by using a tree containing all move possibilities.
+The leaf nodes of the three will be containing the information of win/lose statement for a tic tac toe grid given.
+Every nodes (not leaf) will have n child nodes with n the number of moves possible to play.
+The program will count, for all move possible at the current state, the number of win state. And choose the move to
+play by choosing the move having maximum winning state.
+"""
+
+"""
+ABOUT STRUCTURE:
+1)The grid of the tic tac toe is represented with a list. The index of the list is associated to the indexth block.
+Example: 7th element is associated to 3th row and 1th collum of the grid
+2) The tree will be presented by node class containing 3 informations
+  1th -> x or o (0 for x 1 for o)
+  2th -> the move index
+  3th value -> (non if not a leaf node else 0 or 1 for win or lose) 
+  and a a list of objets of same class for children
+GENERAL WORK OF THE PROGRAM EXPLAINED STEP BY STEP THAT WILL BE USED
+1) A function taking a grid as parameter and printing the grid
+2) A function that taking a value, an index, and a grid first to verify if the move to play in the index case is
+valid and if it is plays to move by modifying the grid and returning it.
+3) A class with necessary functionalities to represent the data structure wanted:
+    -node searcher
+    -wining situation counter
+4) A maximum function that sorts the list and returning the index of the move with the most winning state
+5) A main function to make user interaction and play the game.
+"""
+#define grid
+grid = [" ", " ", " ", " ", " ", " ", " ", " ", " "]
+temp_grid = ["o", "o", "o", "x", "o", "x", "o", "x", "o"]
+
+def get_empty_place_index(grid):
+    places = []
+    for i in range(9):
+        if(grid[i] == " "):
+            places.append(i)
+    return places
+
+#let's define the node
+class node:
+    def __init__(self, x_y, index, win_lose, children, grid):
+        self.x_y = x_y
+        self.index = index
+        self.win_lose = win_lose
+        self.children = children
+        self.g = copy.copy(grid)
+
+    def set_index(self, index):
+        self.index = index
+
+    def set_win_lose(self, wl):
+        self.win_lose = wl
+
+    def play(self):
+        #print("hello")
+        self.g[self.index] = self.x_y;
+        #print(self.g)
+
+    def remove(self):
+        #print("hello")
+        self.g[self.index] = " ";
+
+    def add_children(self):
+        places = get_empty_place_index(self.g)
+        if(len(places) == 0):
+            return
+        for x in places:
+            child = node("x" if self.x_y == "o" else "o", x, -1, [],self.g)
+            self.children.append(child);
+            #print(self.g)
+
+    def get_children(self, i):
+        return self.children[i]
+
+def check_horizontal(grid, symbol):
+    # check horizontal lines
+    for x in range(3):
+        winning = False
+        index = 0
+        for y in range(3):
+            if (grid[x*3 + y] == symbol):
+                index += 1
+        if(index == 3):
+            winning = True
+            break
+    return winning
+
+def search_horizontal(grid, symbol):
+    """this function checks if it is possible to beat in one move and if it is the case it returns the index"""
+    for x in range(3):
+        index = 0
+        for y in range(3):
+            if (grid[x*3 + y] == symbol):
+                index += 1
+        if(index == 2):
+            for z in range(3):
+                if (grid[x * 3 + z] == " "):
+                    return x*3 + z
+    return -1
+
+def check_vertical(grid, symbol):
+    # check horizontal lines
+    for x in range(3):
+        winning = False
+        index = 0
+        for y in range(3):
+            if (grid[y*3 + x] == symbol):
+                index += 1
+        if(index == 3):
+            winning = True
+            break
+    return winning
+
+def search_vertical(grid, symbol):
+    # check horizontal lines
+    for x in range(3):
+        index = 0
+        for y in range(3):
+            if (grid[y*3 + x] == symbol):
+                index += 1
+        if(index == 2):
+            for z in range(3):
+                if (grid[z * 3 + x] == " "):
+                    return z*3+x
+    return -1
+
+def search(grid, computer_symbol, player_symbol):
+    #if the computer can win
+    if(not(search_horizontal(grid, computer_symbol) == -1)):
+        return search_horizontal(grid, computer_symbol)
+    if(not(search_vertical(grid, computer_symbol) == -1)):
+        return search_vertical(grid,computer_symbol)
+    if (not (search_diagonal(grid, computer_symbol) == -1)):
+        return search_diagonal(grid, computer_symbol)
+    #if the player can win
+    if (not (search_horizontal(grid, player_symbol) == -1)):
+        return search_horizontal(grid, player_symbol)
+    if (not (search_vertical(grid, player_symbol) == -1)):
+        return search_vertical(grid, player_symbol)
+    if (not (search_diagonal(grid, player_symbol) == -1)):
+        return search_diagonal(grid, computer_symbol)
+    return -1
+
+def check_diagonal(grid, symbol):
+    winning1 = False
+    #first diagonal
+    index = 0
+    for x in range(3):
+        if(grid[x*3 + x] == symbol):
+            index += 1
+    if (index == 3):
+        winning1 = True
+
+    winning2 = False
+    #second diagonal
+    index = 0
+    for x in range(3):
+        if(grid[(x+1)*2] == symbol):
+            index += 1
+    if (index == 3):
+        winning2 = True
+    return (winning1 or winning2)
+
+def search_diagonal(grid, computer_symbol):
+    #first diagonal
+    index = 0
+    for x in range(3):
+        if(grid[x*3 + x] == computer_symbol):
+            index += 1
+    if (index == 2):
+        for z in range(3):
+            if (grid[z * 3 + z] == " "):
+                return z * 3 + z
+    #second diagonal
+    index = 0
+    for x in range(3):
+        if(grid[(x+1)*2] == computer_symbol):
+            index += 1
+    if (index == 2):
+        for z in range(3):
+            if (grid[(z+1)*2] == " "):
+                return (z+1)*2
+    return -1
+
+def check_win(grid, symbol):
+    """Gets a grid state, returns true if the player with the symbol wins else returns false"""
+    return check_horizontal(grid, symbol) or check_vertical(grid, symbol) or check_diagonal(grid, symbol)
+
+
+
+def create_tree(root, symbole):
+    num_empty = len(get_empty_place_index(root.g))
+    if(num_empty == 0): #stop if there is no more place
+        return
+    elif(check_win(root.g, "x") or check_win(root.g, "o")): #or if someone win
+        if(check_win(root.g, symbole)): #if the computer is playing o
+            #computer wins in this scenario
+            root.set_win_lose(1)
+        else:
+            #computer loses in this scenerio
+            root.set_win_lose(0)
+        return
+    else:
+        root.add_children()
+        for i in range(len(root.children)):
+            root.children[i].play()
+            create_tree(root.children[i], symbole)
+
+def number_of_wins(root, wins, index): #root for the node and i for to contain number of wins
+    if(root.win_lose == 1): #computer has won
+        wins[index]+= 1
+        return
+    else:
+        for x in range(len(root.children)):
+            number_of_wins(root.children[x], wins, index)
+
+
+#take the grid and show it
+def show_grid(list):
+    index = 0
+    for x in range(5):
+        if(x%2 == 0):
+            print(list[index] + "|" + list[index+1] + "|" + list[index + 2])
+            index += 3
+        else:
+            print("- - - ")
+
+
+#makes a move if it is possible
+def move(value, index, grid):
+    #check if the case is empty
+    if(grid[index] != " "):
+        print("this case is not empty")
+        return
+    else:
+        #add value to the case
+        grid[index] = value
+
+def restore_wins(node):
+    """this function take a node and calculate all posibilities and put it in a list of list by associating all
+    values with their index"""
+    n = len(node.children)
+    wins = [0 for x in range(n)]
+    for x in range(n):
+        number_of_wins(node.children[x], wins, x)
+    return wins
+
+def sort_wins(wins, node):
+    n = len(wins)
+    index = [node.children[x].index for x in range(n)]
+    #let's make a bubble sort yeah
+    swaped = True
+    while swaped:
+        swaped = False
+        for i in range(1,n):
+            if(wins[i-1] > wins[i]):
+                #swap values
+                tmp = wins[i-1]
+                wins[i-1] = wins[i]
+                wins[i] = tmp
+                #swap index values
+                tmp = index[i-1]
+                index[i-1] = index[i]
+                index[i] = tmp
+                swaped = True
+    return [wins, index]
+
+def play_index(wins):
+    return wins[1][-1]
+
+def computer_turn(ps, cs, case):
+    # create possibility tree
+    print("computer's turn")
+    if(search(grid, cs, ps) != -1):
+        print(search(grid, cs, ps))
+        case = search(grid, cs, ps)
+        move(cs, case, grid)
+        show_grid(grid)
+        return
+    tree = node(ps, case, -1, [], grid)
+    create_tree(tree, cs)
+    # calculate win states
+    wins = restore_wins(tree)
+    wins = sort_wins(wins, tree)
+    # print(wins)
+    case = play_index(wins)
+    move(cs, case, grid)
+    show_grid(grid)
+
+
+
+def play_the_game():
+    print("TIC TAC TOE")
+    player_symbol = input("x or o")
+    computer_symbol = "x" if player_symbol == "o" else "o"
+    show_grid(grid)
+    if player_symbol == "x":
+        while (len(get_empty_place_index(grid)) != 0 and (not (check_win(grid, "x")) and not (check_win(grid, "o")))):
+            print("Give a valid case (0," + str(len(get_empty_place_index(grid))) + ")")
+            case = int(input())
+            move(player_symbol, case, grid)
+            show_grid(grid)
+            # check again for the end statment
+            if (len(get_empty_place_index(grid)) == 0 or (check_win(grid, "x") or check_win(grid, "o"))):
+                break
+            computer_turn(player_symbol, computer_symbol, case)
+    elif player_symbol == "o":
+        case = -1
+        while (len(get_empty_place_index(grid)) != 0 and (not (check_win(grid, "x")) and not (check_win(grid, "o")))):
+            computer_turn(player_symbol, computer_symbol, case)
+            # check again for the end statment
+            if (len(get_empty_place_index(grid)) == 0 or (check_win(grid, "x") or check_win(grid, "o"))):
+                break
+            print("Give a valid case (0," + str(len(get_empty_place_index(grid))) + ")")
+            case = int(input())
+            move(player_symbol, case, grid)
+            show_grid(grid)
+
+    if(check_win(grid, player_symbol)):
+        print("You win")
+    elif(check_win(grid, computer_symbol)):
+        print("You lose")
+    else:
+        print("draw")
+
+
+play_the_game()
